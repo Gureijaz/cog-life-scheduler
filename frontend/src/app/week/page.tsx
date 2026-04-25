@@ -36,8 +36,8 @@ function getMonthYear(dateStr: string): string {
 }
 
 export default function WeekPage() {
-  const today = getTodayDate();
-  const weekStart = getWeekStartDate();
+  const [today] = useState(() => getTodayDate());
+  const [weekStart] = useState(() => getWeekStartDate());
   const { plans, loading, error, refresh } = useWeekSchedule(weekStart);
   const { addToast } = useToast();
   const [selectedBlock, setSelectedBlock] = useState<ScheduleBlockType | null>(null);

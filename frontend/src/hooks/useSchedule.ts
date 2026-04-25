@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { ScheduleBlock, SchedulePlan, Explanation, UnscheduledItem, AtRiskAssignment, ChangeSummary } from '@/lib/types';
-import { schedules, scheduleBlocks } from '@/lib/api';
+import { schedules, scheduleBlocks, ApiRequestError } from '@/lib/api';
 import type { ScheduleResult, RepairResult } from '@/lib/api';
 
 interface UseScheduleReturn {
@@ -52,9 +52,14 @@ export function useSchedule(date: string): UseScheduleReturn {
       const result = await schedules.get(date);
       setPlan(result);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to load schedule';
-      setError(message);
-      setPlan(null);
+      // 404 = no schedule yet, not an error
+      if (err instanceof ApiRequestError && err.status === 404) {
+        setPlan(null);
+      } else {
+        const message = err instanceof Error ? err.message : 'Failed to load schedule';
+        setError(message);
+        setPlan(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -160,9 +165,13 @@ export function useWeekSchedule(startDate: string): UseWeekScheduleReturn {
       const result = await schedules.getWeek(startDate);
       setPlans(Array.isArray(result) ? result : []);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to load week schedule';
-      setError(message);
-      setPlans([]);
+      if (err instanceof ApiRequestError && err.status === 404) {
+        setPlans([]);
+      } else {
+        const message = err instanceof Error ? err.message : 'Failed to load week schedule';
+        setError(message);
+        setPlans([]);
+      }
     } finally {
       setLoading(false);
     }

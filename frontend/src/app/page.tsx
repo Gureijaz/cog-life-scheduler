@@ -14,7 +14,7 @@ import TaskForm from '@/components/tasks/TaskForm';
 import { getTodayDate, formatDate, formatRelativeDate, formatDuration } from '@/lib/utils';
 
 export default function TodayPage() {
-  const today = getTodayDate();
+  const [today] = useState(() => getTodayDate());
   const {
     blocks, loading, error, plan,
     lockBlock, unlockBlock,
