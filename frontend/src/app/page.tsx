@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import type { ScheduleBlock as ScheduleBlockType } from '@/lib/types';
 import { useSchedule } from '@/hooks/useSchedule';
 import { useToast } from '@/hooks/useToast';
@@ -14,21 +14,31 @@ import EventForm from '@/components/events/EventForm';
 import TaskForm from '@/components/tasks/TaskForm';
 import { getTodayDate, formatDate, formatRelativeDate, formatDuration } from '@/lib/utils';
 
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 export default function TodayPage() {
-  const [today] = useState(() => getTodayDate());
+  const [selectedDate, setSelectedDate] = useState(() => getTodayDate());
   const {
     blocks, loading, error, plan,
     lockBlock, unlockBlock,
     generateSchedule, repairSchedule,
     unscheduledItems, atRiskAssignments,
     changeSummary, clearChangeSummary, generating, refresh,
-  } = useSchedule(today);
+  } = useSchedule(selectedDate);
   const { addToast } = useToast();
   const { triggerExplosion } = useParticleController();
   const generateBtnRef = useRef<HTMLButtonElement>(null);
   const [selectedBlock, setSelectedBlock] = useState<ScheduleBlockType | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
+
+  const goToPrevDay = useCallback(() => setSelectedDate((d) => addDays(d, -1)), []);
+  const goToNextDay = useCallback(() => setSelectedDate((d) => addDays(d, 1)), []);
+  const goToToday = useCallback(() => setSelectedDate(getTodayDate()), []);
 
   const handleBlockClick = (block: ScheduleBlockType) => {
     setSelectedBlock((prev) => (prev?.id === block.id ? null : block));
@@ -72,9 +82,16 @@ export default function TodayPage() {
   return (
     <div className="today-view">
       <header className="today-view__header">
-        <div>
-          <h1 className="today-view__title">{formatRelativeDate(today)}</h1>
-          <p className="today-view__date">{formatDate(today)}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+          <button className="btn btn--secondary btn--sm" onClick={goToPrevDay} aria-label="Previous day">←</button>
+          <div>
+            <h1 className="today-view__title">{formatRelativeDate(selectedDate)}</h1>
+            <p className="today-view__date">{formatDate(selectedDate)}</p>
+          </div>
+          <button className="btn btn--secondary btn--sm" onClick={goToNextDay} aria-label="Next day">→</button>
+          {selectedDate !== getTodayDate() && (
+            <button className="btn btn--secondary btn--sm" onClick={goToToday}>Today</button>
+          )}
         </div>
         <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
           <button className="btn btn--secondary" onClick={() => setShowEventModal(true)}>

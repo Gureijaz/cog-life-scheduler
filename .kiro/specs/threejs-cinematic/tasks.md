@@ -2,7 +2,7 @@
 
 - [ ] 1. Install dependencies and configure project
   - [x] 1.1 Add `three`, `@react-three/fiber`, `@react-three/drei`, `@react-three/postprocessing`, `framer-motion`, `@react-spring/three`, and `three-stdlib` to `frontend/package.json` dependencies and run install
-  - [-] 1.2 Update `frontend/next.config.ts` to transpile Three.js packages if needed and configure webpack for GLSL shader imports
+  - [x] 1.2 Update `frontend/next.config.ts` to transpile Three.js packages if needed and configure webpack for GLSL shader imports
   - [ ] 1.3 Create `frontend/src/components/three/` directory structure for all 3D components
 
 - [ ] 2. Implement core hooks

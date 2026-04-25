@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import type { ScheduleBlock as ScheduleBlockType } from '@/lib/types';
 import { useWeekSchedule } from '@/hooks/useSchedule';
 import { useToast } from '@/hooks/useToast';
@@ -10,8 +10,15 @@ import BlockDetail from '@/components/calendar/BlockDetail';
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 import Modal from '@/components/ui/Modal';
 import EventForm from '@/components/events/EventForm';
+import TaskForm from '@/components/tasks/TaskForm';
 import { getWeekStartDate, getTodayDate } from '@/lib/utils';
 import DynamicScheduleViz3D from '@/components/three/DynamicScheduleViz3D';
+
+function addWeeks(dateStr: string, weeks: number): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + weeks * 7);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 function getWeekDates(start: string): string[] {
   const dates: string[] = [];
@@ -39,12 +46,17 @@ function getMonthYear(dateStr: string): string {
 
 export default function WeekPage() {
   const [today] = useState(() => getTodayDate());
-  const [weekStart] = useState(() => getWeekStartDate());
+  const [weekStart, setWeekStart] = useState(() => getWeekStartDate());
   const { plans, loading, error, refresh } = useWeekSchedule(weekStart);
   const { addToast } = useToast();
   const [selectedBlock, setSelectedBlock] = useState<ScheduleBlockType | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
+  const [showTaskModal, setShowTaskModal] = useState(false);
   const [view3D, setView3D] = useState(false);
+
+  const goToPrevWeek = useCallback(() => setWeekStart((ws) => addWeeks(ws, -1)), []);
+  const goToNextWeek = useCallback(() => setWeekStart((ws) => addWeeks(ws, 1)), []);
+  const goToCurrentWeek = useCallback(() => setWeekStart(getWeekStartDate()), []);
 
   const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart]);
 
@@ -79,7 +91,12 @@ export default function WeekPage() {
   return (
     <div className="gcal-page">
       <header className="gcal-header">
-        <h1 className="gcal-header__title">{getMonthYear(weekDates[0])}</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+          <button className="btn btn--secondary btn--sm" onClick={goToPrevWeek} aria-label="Previous week">←</button>
+          <h1 className="gcal-header__title">{getMonthYear(weekDates[0])}</h1>
+          <button className="btn btn--secondary btn--sm" onClick={goToNextWeek} aria-label="Next week">→</button>
+          <button className="btn btn--secondary btn--sm" onClick={goToCurrentWeek}>Today</button>
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
           <button
             className={`btn ${view3D ? 'btn--primary' : 'btn--secondary'}`}
@@ -89,6 +106,9 @@ export default function WeekPage() {
           </button>
           <button className="btn btn--secondary" onClick={() => setShowEventModal(true)}>
             Add Event
+          </button>
+          <button className="btn btn--secondary" onClick={() => setShowTaskModal(true)}>
+            Add Task
           </button>
           <div className="gcal-header__legend">
             <span className="gcal-legend__item"><span className="gcal-legend__dot" style={{ background: 'var(--color-fixed-event)' }} /> Events</span>
@@ -159,6 +179,13 @@ export default function WeekPage() {
         <EventForm
           onSaved={() => { setShowEventModal(false); refresh(); }}
           onCancel={() => setShowEventModal(false)}
+        />
+      </Modal>
+
+      <Modal open={showTaskModal} onClose={() => setShowTaskModal(false)} ariaLabel="Create task">
+        <TaskForm
+          onSaved={() => { setShowTaskModal(false); refresh(); }}
+          onCancel={() => setShowTaskModal(false)}
         />
       </Modal>
     </div>
