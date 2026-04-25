@@ -31,7 +31,8 @@ export function validationError(
  * Returns null if the format is invalid.
  */
 export function parseTime(time: string): number | null {
-  const match = /^(\d{2}):(\d{2})$/.exec(time);
+  // Accept HH:mm or HH:mm:ss (PostgreSQL TIME format)
+  const match = /^(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(time);
   if (!match) return null;
   const hours = parseInt(match[1], 10);
   const minutes = parseInt(match[2], 10);
