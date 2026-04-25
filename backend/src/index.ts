@@ -37,10 +37,14 @@ import {
 const app = express();
 
 // CORS — allow frontend origin
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',')
-  : ['http://localhost:3000'];
-app.use(cors({ origin: allowedOrigins, credentials: true }));
+const corsOrigin = process.env.CORS_ORIGIN;
+if (corsOrigin) {
+  const origins = corsOrigin.split(',').map(o => o.trim());
+  app.use(cors({ origin: origins, credentials: true }));
+} else {
+  // Default: allow all origins in development
+  app.use(cors());
+}
 
 app.use(express.json());
 app.use(authMiddleware);
