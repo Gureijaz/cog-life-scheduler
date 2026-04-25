@@ -37,14 +37,10 @@ import {
 const app = express();
 
 // CORS — allow frontend origin
-const corsOrigin = process.env.CORS_ORIGIN;
-if (corsOrigin) {
-  const origins = corsOrigin.split(',').map(o => o.trim());
-  app.use(cors({ origin: origins, credentials: true }));
-} else {
-  // Default: allow all origins in development
-  app.use(cors());
-}
+app.use(cors({
+  origin: true,
+  credentials: true,
+}));
 
 app.use(express.json());
 app.use(authMiddleware);
