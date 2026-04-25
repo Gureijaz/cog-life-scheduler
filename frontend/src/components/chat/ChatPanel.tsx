@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState } from 'react';
 import { useChat } from '@/hooks/useChat';
+import { useParticleController } from '@/hooks/useParticleController';
 import MessageBubble from './MessageBubble';
 import ConfirmationCard from './ConfirmationCard';
 
@@ -19,6 +20,7 @@ interface ChatPanelProps {
 
 export default function ChatPanel({ open, onClose, onDataChanged }: ChatPanelProps) {
   const { messages, sending, sendMessage, confirmAction, rejectAction } = useChat(onDataChanged);
+  const { triggerSparkle } = useParticleController();
   const [input, setInput] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -26,7 +28,17 @@ export default function ChatPanel({ open, onClose, onDataChanged }: ChatPanelPro
     if (listRef.current) {
       listRef.current.scrollTop = listRef.current.scrollHeight;
     }
-  }, [messages]);
+    // Trigger sparkle on new AI messages
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg && lastMsg.role === 'assistant' && listRef.current) {
+      const rect = listRef.current.getBoundingClientRect();
+      const path = [
+        { x: rect.left + rect.width * 0.3, y: rect.bottom - 40 },
+        { x: rect.left + rect.width * 0.7, y: rect.bottom - 40 },
+      ];
+      triggerSparkle(path, '#6366f1');
+    }
+  }, [messages, triggerSparkle]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +65,7 @@ export default function ChatPanel({ open, onClose, onDataChanged }: ChatPanelPro
   if (!open) return null;
 
   return (
-    <aside className="chat-panel" role="complementary" aria-label="AI Assistant">
+    <aside className="chat-panel glassmorphism-panel" role="complementary" aria-label="AI Assistant">
       <div className="chat-panel__header">
         <h2 className="chat-panel__title">Cog Assistant</h2>
         <button type="button" className="block-detail__close" onClick={onClose} aria-label="Close chat">

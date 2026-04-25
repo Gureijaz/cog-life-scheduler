@@ -33,7 +33,7 @@ export default function BlockDetail({ block, onClose, onLockToggle }: BlockDetai
   }, [onClose]);
 
   return (
-    <aside className="block-detail" role="complementary" aria-label="Block details">
+    <aside className="block-detail glassmorphism-panel" role="complementary" aria-label="Block details">
       <div className="block-detail__header">
         <h2 className="block-detail__title">{block.title}</h2>
         <button

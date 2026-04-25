@@ -82,7 +82,7 @@ export default function Sidebar({ onChatToggle, chatOpen }: SidebarProps) {
       />
 
       <aside
-        className={`sidebar${mobileOpen ? ' sidebar--open' : ''}`}
+        className={`sidebar glassmorphism-panel${mobileOpen ? ' sidebar--open' : ''}`}
         role="navigation"
         aria-label="Main navigation"
       >

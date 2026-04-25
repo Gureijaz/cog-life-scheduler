@@ -42,7 +42,7 @@ export default function Modal({ open, onClose, children, ariaLabel }: ModalProps
 
   return (
     <div className="modal-overlay" onClick={handleBackdropClick} role="dialog" aria-modal="true" aria-label={ariaLabel}>
-      <div className="modal-content" ref={contentRef}>
+      <div className="modal-content glassmorphism-panel" ref={contentRef}>
         {children}
       </div>
     </div>

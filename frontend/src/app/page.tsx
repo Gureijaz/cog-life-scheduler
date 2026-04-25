@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { ScheduleBlock as ScheduleBlockType } from '@/lib/types';
 import { useSchedule } from '@/hooks/useSchedule';
 import { useToast } from '@/hooks/useToast';
+import { useParticleController } from '@/hooks/useParticleController';
 import ScheduleBlock from '@/components/calendar/ScheduleBlock';
 import BlockDetail from '@/components/calendar/BlockDetail';
 import RepairSummary from '@/components/calendar/RepairSummary';
@@ -23,6 +24,8 @@ export default function TodayPage() {
     changeSummary, clearChangeSummary, generating, refresh,
   } = useSchedule(today);
   const { addToast } = useToast();
+  const { triggerExplosion } = useParticleController();
+  const generateBtnRef = useRef<HTMLButtonElement>(null);
   const [selectedBlock, setSelectedBlock] = useState<ScheduleBlockType | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
@@ -48,6 +51,8 @@ export default function TodayPage() {
 
   const handleGenerate = async () => {
     try {
+      const btnRect = generateBtnRef.current?.getBoundingClientRect();
+      if (btnRect) triggerExplosion(btnRect, '#6366f1');
       await generateSchedule();
       addToast('success', 'Schedule generated successfully');
     } catch {
@@ -79,6 +84,7 @@ export default function TodayPage() {
             Add Task
           </button>
           <button
+            ref={generateBtnRef}
             className="btn btn--primary"
             onClick={handleGenerate}
             disabled={generating}

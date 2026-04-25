@@ -11,6 +11,7 @@ import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 import Modal from '@/components/ui/Modal';
 import EventForm from '@/components/events/EventForm';
 import { getWeekStartDate, getTodayDate } from '@/lib/utils';
+import DynamicScheduleViz3D from '@/components/three/DynamicScheduleViz3D';
 
 function getWeekDates(start: string): string[] {
   const dates: string[] = [];
@@ -43,6 +44,7 @@ export default function WeekPage() {
   const { addToast } = useToast();
   const [selectedBlock, setSelectedBlock] = useState<ScheduleBlockType | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
+  const [view3D, setView3D] = useState(false);
 
   const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart]);
 
@@ -79,6 +81,12 @@ export default function WeekPage() {
       <header className="gcal-header">
         <h1 className="gcal-header__title">{getMonthYear(weekDates[0])}</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+          <button
+            className={`btn ${view3D ? 'btn--primary' : 'btn--secondary'}`}
+            onClick={() => setView3D(!view3D)}
+          >
+            {view3D ? '2D View' : '3D View'}
+          </button>
           <button className="btn btn--secondary" onClick={() => setShowEventModal(true)}>
             Add Event
           </button>
@@ -121,12 +129,21 @@ export default function WeekPage() {
       )}
       {error && <p className="gcal-status gcal-status--error">{error}</p>}
 
-      {!loading && (
+      {!loading && !view3D && (
         <WeekGrid
           dates={weekDates}
           blocksByDate={blocksByDate}
           onBlockClick={handleBlockClick}
           today={today}
+        />
+      )}
+
+      {!loading && view3D && (
+        <DynamicScheduleViz3D
+          blocksByDate={blocksByDate}
+          dates={weekDates}
+          onBlockSelect={handleBlockClick}
+          active={view3D}
         />
       )}
 

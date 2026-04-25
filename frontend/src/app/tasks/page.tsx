@@ -9,6 +9,8 @@ import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 import Modal from '@/components/ui/Modal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import TaskForm from '@/components/tasks/TaskForm';
+import FloatingCard3D from '@/components/three/FloatingCard3D';
+import { useParticleController } from '@/hooks/useParticleController';
 
 const PRIORITY_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
 
@@ -18,6 +20,7 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { addToast } = useToast();
+  const { triggerDissolve } = useParticleController();
 
   // Modal state
   const [showTaskModal, setShowTaskModal] = useState(false);
@@ -25,7 +28,7 @@ export default function TasksPage() {
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
 
   // Delete confirmation state
-  const [deleteTarget, setDeleteTarget] = useState<{ type: 'task' | 'assignment'; id: string; title: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'task' | 'assignment'; id: string; title: string; rect?: DOMRect } | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -71,6 +74,9 @@ export default function TasksPage() {
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
     try {
+      if (deleteTarget.rect) {
+        triggerDissolve(deleteTarget.rect, deleteTarget.type === 'task' ? '#10b981' : '#f59e0b');
+      }
       if (deleteTarget.type === 'task') {
         await flexibleTasks.delete(deleteTarget.id);
       }
@@ -112,7 +118,8 @@ export default function TasksPage() {
             )}
             <div className="tasks-page__list" role="list" aria-label="Flexible tasks">
               {sortedTasks.map((task) => (
-                <div key={task.id} className="task-card" role="listitem">
+                <FloatingCard3D key={task.id} depth={800} rotateIntensity={12} floatAmplitude={3}>
+                <div className="task-card glassmorphism-panel" role="listitem">
                   <div className="task-card__header">
                     <span className="task-card__title">{task.title}</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
@@ -120,7 +127,7 @@ export default function TasksPage() {
                         {task.priority}
                       </span>
                       <button className="btn btn--secondary btn--sm" onClick={() => handleEditTask(task)}>Edit</button>
-                      <button className="btn btn--secondary btn--sm" onClick={() => setDeleteTarget({ type: 'task', id: task.id, title: task.title })}>Delete</button>
+                      <button className="btn btn--secondary btn--sm" onClick={(e) => setDeleteTarget({ type: 'task', id: task.id, title: task.title, rect: (e.currentTarget.closest('.task-card') as HTMLElement)?.getBoundingClientRect() })}>Delete</button>
                     </div>
                   </div>
                   <div className="task-card__details">
@@ -129,6 +136,7 @@ export default function TasksPage() {
                     <span>Min session: {formatDuration(task.minSessionMinutes)}</span>
                   </div>
                 </div>
+                </FloatingCard3D>
               ))}
             </div>
           </section>
@@ -140,7 +148,8 @@ export default function TasksPage() {
             )}
             <div className="tasks-page__list" role="list" aria-label="Assignments">
               {sortedAssignments.map((a) => (
-                <div key={a.id} className="task-card task-card--assignment" role="listitem">
+                <FloatingCard3D key={a.id} depth={800} rotateIntensity={12} floatAmplitude={3}>
+                <div className="task-card task-card--assignment glassmorphism-panel" role="listitem">
                   <div className="task-card__header">
                     <span className="task-card__title">{a.title}</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
@@ -148,7 +157,7 @@ export default function TasksPage() {
                         Urgency: {(a.urgencyScore * 100).toFixed(0)}%
                       </span>
                       <button className="btn btn--secondary btn--sm" onClick={() => handleEditAssignment(a)}>Edit</button>
-                      <button className="btn btn--secondary btn--sm" onClick={() => setDeleteTarget({ type: 'assignment', id: a.id, title: a.title })}>Delete</button>
+                      <button className="btn btn--secondary btn--sm" onClick={(e) => setDeleteTarget({ type: 'assignment', id: a.id, title: a.title, rect: (e.currentTarget.closest('.task-card') as HTMLElement)?.getBoundingClientRect() })}>Delete</button>
                     </div>
                   </div>
                   <div className="task-card__details">
@@ -163,6 +172,7 @@ export default function TasksPage() {
                     />
                   </div>
                 </div>
+                </FloatingCard3D>
               ))}
             </div>
           </section>
