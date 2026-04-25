@@ -1,0 +1,12 @@
+{
+  "name": "cog-life-scheduler",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "backend": "npm run --workspace=backend",
+    "frontend": "npm run --workspace=frontend"
+  }
+}

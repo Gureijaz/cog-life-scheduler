@@ -1,0 +1,9 @@
+export { userRouter } from './users';
+export { fixedEventRouter } from './fixed-events';
+export { flexibleTaskRouter } from './flexible-tasks';
+export { assignmentRouter } from './assignments';
+export { locationRouter } from './locations';
+export { travelRuleRouter } from './travel-rules';
+export { scheduleRouter } from './schedules';
+export { scheduleBlockRouter } from './schedule-blocks';
+export { aiRouter } from './ai';
