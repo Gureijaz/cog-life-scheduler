@@ -111,13 +111,20 @@ export default function PreferenceForm({ userId, initial, onSaved }: PreferenceF
         <input type="number" min={0} value={defaultCommuteMinutes} onChange={(e) => setDefaultCommuteMinutes(Number(e.target.value))} />
       </label>
 
-      <label className="form-checkbox">
-        <input type="checkbox" checked={autoRepairEnabled} onChange={(e) => setAutoRepairEnabled(e.target.checked)} />
+      <label className="toggle-switch">
+        <input
+          type="checkbox"
+          className="toggle-switch__input"
+          checked={autoRepairEnabled}
+          onChange={(e) => setAutoRepairEnabled(e.target.checked)}
+        />
+        <span className="toggle-switch__slider" />
         <span>Auto-repair schedule on changes</span>
       </label>
 
       <div className="entity-form__actions">
         <button type="submit" className="btn btn--primary" disabled={saving}>
+          {saving && <span className="btn__spinner" />}
           {saving ? 'Saving…' : 'Save Preferences'}
         </button>
       </div>

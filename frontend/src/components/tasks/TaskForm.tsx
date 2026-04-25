@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { FlexibleTask, Assignment, Priority, EnergyLevel } from '@/lib/types';
 import { flexibleTasks, assignments, ApiRequestError } from '@/lib/api';
 import type { CreateFlexibleTaskInput, CreateAssignmentInput } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
 
 type Mode = 'task' | 'assignment';
 
@@ -19,8 +20,8 @@ export default function TaskForm({ mode: initialMode, initialTask, initialAssign
   const [mode, setMode] = useState<Mode>(initialMode ?? (initialAssignment ? 'assignment' : 'task'));
   const isEditTask = !!initialTask;
   const isEditAssignment = !!initialAssignment;
+  const { addToast } = useToast();
 
-  // Task fields
   const [title, setTitle] = useState(initialTask?.title ?? initialAssignment?.title ?? '');
   const [category, setCategory] = useState(initialTask?.category ?? '');
   const [estimatedMinutes, setEstimatedMinutes] = useState(initialTask?.estimatedMinutes ?? 60);
@@ -29,7 +30,6 @@ export default function TaskForm({ mode: initialMode, initialTask, initialAssign
   const [dueDate, setDueDate] = useState(initialTask?.dueDate ?? '');
   const [energyRequirement, setEnergyRequirement] = useState<EnergyLevel>(initialTask?.energyRequirement ?? 'medium');
 
-  // Assignment fields
   const [subject, setSubject] = useState(initialAssignment?.subject ?? '');
   const [deadline, setDeadline] = useState(initialAssignment?.deadline?.slice(0, 16) ?? '');
   const [totalMinutes, setTotalMinutes] = useState(initialAssignment?.estimatedTotalMinutes ?? 120);
@@ -54,6 +54,7 @@ export default function TaskForm({ mode: initialMode, initialTask, initialAssign
         } else {
           await flexibleTasks.create(data);
         }
+        addToast('success', isEditTask ? 'Task updated' : 'Task created');
       } else {
         const data: CreateAssignmentInput = {
           title, subject, deadline: new Date(deadline).toISOString(),
@@ -64,6 +65,7 @@ export default function TaskForm({ mode: initialMode, initialTask, initialAssign
         } else {
           await assignments.create(data);
         }
+        addToast('success', isEditAssignment ? 'Assignment updated' : 'Assignment created');
       }
       onSaved?.();
     } catch (err: unknown) {
@@ -171,6 +173,7 @@ export default function TaskForm({ mode: initialMode, initialTask, initialAssign
       <div className="entity-form__actions">
         {onCancel && <button type="button" className="btn btn--secondary" onClick={onCancel}>Cancel</button>}
         <button type="submit" className="btn btn--primary" disabled={saving}>
+          {saving && <span className="btn__spinner" />}
           {saving ? 'Saving…' : 'Save'}
         </button>
       </div>

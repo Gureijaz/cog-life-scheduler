@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { FlexibleTask, Assignment } from '@/lib/types';
 import { flexibleTasks, assignments } from '@/lib/api';
 import { formatDate, formatDuration } from '@/lib/utils';
+import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 
 const PRIORITY_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
 
@@ -43,7 +44,7 @@ export default function TasksPage() {
         <h1 className="tasks-page__title">Tasks &amp; Assignments</h1>
       </header>
 
-      {loading && <p className="tasks-page__status">Loading…</p>}
+      {loading && <LoadingSkeleton variant="card" count={4} />}
       {error && <p className="tasks-page__status tasks-page__status--error">{error}</p>}
 
       {!loading && !error && (
@@ -51,7 +52,7 @@ export default function TasksPage() {
           <section className="tasks-page__section">
             <h2 className="tasks-page__section-title">Flexible Tasks</h2>
             {sortedTasks.length === 0 && (
-              <p className="tasks-page__empty">No flexible tasks.</p>
+              <p className="tasks-page__empty">No flexible tasks yet. Create one to get started with smart scheduling.</p>
             )}
             <div className="tasks-page__list" role="list" aria-label="Flexible tasks">
               {sortedTasks.map((task) => (
@@ -75,7 +76,7 @@ export default function TasksPage() {
           <section className="tasks-page__section">
             <h2 className="tasks-page__section-title">Assignments</h2>
             {sortedAssignments.length === 0 && (
-              <p className="tasks-page__empty">No assignments.</p>
+              <p className="tasks-page__empty">No assignments yet. Add one to track deadlines and progress.</p>
             )}
             <div className="tasks-page__list" role="list" aria-label="Assignments">
               {sortedAssignments.map((a) => (

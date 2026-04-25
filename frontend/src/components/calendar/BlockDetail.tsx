@@ -1,8 +1,10 @@
 'use client';
 
+import { useEffect } from 'react';
 import type { ScheduleBlock } from '@/lib/types';
 import { useExplanation } from '@/hooks/useSchedule';
 import { formatTimeRange } from '@/lib/utils';
+import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 
 const SOURCE_LABELS: Record<string, string> = {
   fixed_event: 'Fixed Event',
@@ -20,6 +22,15 @@ interface BlockDetailProps {
 export default function BlockDetail({ block, onClose, onLockToggle }: BlockDetailProps) {
   const { explanation, loading: explanationLoading, error: explanationError } =
     useExplanation(block.id);
+
+  // Escape key to close
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   return (
     <aside className="block-detail" role="complementary" aria-label="Block details">
@@ -56,13 +67,13 @@ export default function BlockDetail({ block, onClose, onLockToggle }: BlockDetai
           className={`block-detail__lock-btn ${block.locked ? 'block-detail__lock-btn--locked' : ''}`}
           onClick={() => onLockToggle(block.id, block.locked)}
         >
-          {block.locked ? 'Unlock Block' : 'Lock Block'}
+          {block.locked ? '🔒 Unlock Block' : '🔓 Lock Block'}
         </button>
       )}
 
       <div className="block-detail__explanation">
         <h3 className="block-detail__section-title">Explanation</h3>
-        {explanationLoading && <p className="block-detail__loading">Loading explanation…</p>}
+        {explanationLoading && <LoadingSkeleton variant="text" count={2} />}
         {explanationError && (
           <p className="block-detail__error">{explanationError}</p>
         )}

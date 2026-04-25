@@ -5,6 +5,12 @@ import { useChat } from '@/hooks/useChat';
 import MessageBubble from './MessageBubble';
 import ConfirmationCard from './ConfirmationCard';
 
+const EXAMPLE_PROMPTS = [
+  'Create a gym session tomorrow at 6 PM',
+  'Reschedule my morning lecture to 10 AM',
+  'Explain why my study block was placed at 2 PM',
+];
+
 interface ChatPanelProps {
   open: boolean;
   onClose: () => void;
@@ -29,6 +35,20 @@ export default function ChatPanel({ open, onClose }: ChatPanelProps) {
     await sendMessage(text);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      const text = input.trim();
+      if (!text || sending) return;
+      setInput('');
+      sendMessage(text);
+    }
+  };
+
+  const handlePromptClick = (prompt: string) => {
+    setInput(prompt);
+  };
+
   if (!open) return null;
 
   return (
@@ -42,7 +62,24 @@ export default function ChatPanel({ open, onClose }: ChatPanelProps) {
 
       <div className="chat-panel__messages" ref={listRef}>
         {messages.length === 0 && (
-          <p className="chat-panel__empty">Ask me to create events, reschedule tasks, or explain your schedule.</p>
+          <div className="chat-panel__empty">
+            <p className="chat-panel__empty-title">Welcome to Cog Assistant</p>
+            <p className="chat-panel__empty-text">
+              Ask me to create events, reschedule tasks, or explain your schedule.
+            </p>
+            <div className="chat-panel__prompts">
+              {EXAMPLE_PROMPTS.map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  className="chat-panel__prompt-btn"
+                  onClick={() => handlePromptClick(prompt)}
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
         {messages.map((msg) => (
           <div key={msg.id}>
@@ -56,7 +93,13 @@ export default function ChatPanel({ open, onClose }: ChatPanelProps) {
             )}
           </div>
         ))}
-        {sending && <p className="chat-panel__typing">Thinking…</p>}
+        {sending && (
+          <div className="chat-panel__typing" aria-label="Assistant is typing">
+            <span className="typing-dot" />
+            <span className="typing-dot" />
+            <span className="typing-dot" />
+          </div>
+        )}
       </div>
 
       <form className="chat-panel__input" onSubmit={handleSubmit}>
@@ -64,6 +107,7 @@ export default function ChatPanel({ open, onClose }: ChatPanelProps) {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder="Type a message…"
           disabled={sending}
           aria-label="Chat message input"

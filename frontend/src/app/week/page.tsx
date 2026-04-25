@@ -5,6 +5,7 @@ import type { ScheduleBlock as ScheduleBlockType } from '@/lib/types';
 import { useWeekSchedule } from '@/hooks/useSchedule';
 import WeekGrid from '@/components/calendar/WeekGrid';
 import BlockDetail from '@/components/calendar/BlockDetail';
+import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 import { getWeekStartDate, getTodayDate } from '@/lib/utils';
 
 function getWeekDates(start: string): string[] {
@@ -54,14 +55,13 @@ export default function WeekPage() {
 
   return (
     <div className="gcal-page">
-      {/* Header bar */}
       <header className="gcal-header">
         <h1 className="gcal-header__title">{getMonthYear(weekDates[0])}</h1>
         <div className="gcal-header__legend">
-          <span className="gcal-legend__item"><span className="gcal-legend__dot" style={{ background: '#4285f4' }} /> Events</span>
-          <span className="gcal-legend__item"><span className="gcal-legend__dot" style={{ background: '#0b8043' }} /> Tasks</span>
-          <span className="gcal-legend__item"><span className="gcal-legend__dot" style={{ background: '#f4511e' }} /> Assignments</span>
-          <span className="gcal-legend__item"><span className="gcal-legend__dot" style={{ background: '#9e9e9e' }} /> Travel</span>
+          <span className="gcal-legend__item"><span className="gcal-legend__dot" style={{ background: 'var(--color-fixed-event)' }} /> Events</span>
+          <span className="gcal-legend__item"><span className="gcal-legend__dot" style={{ background: 'var(--color-flexible-task)' }} /> Tasks</span>
+          <span className="gcal-legend__item"><span className="gcal-legend__dot" style={{ background: 'var(--color-assignment)' }} /> Assignments</span>
+          <span className="gcal-legend__item"><span className="gcal-legend__dot" style={{ background: 'var(--color-travel-buffer)' }} /> Travel</span>
         </div>
       </header>
 
@@ -84,18 +84,26 @@ export default function WeekPage() {
         </div>
       </div>
 
-      {loading && <p className="gcal-status">Loading week schedule…</p>}
+      {loading && (
+        <div style={{ display: 'flex', gap: '8px', padding: '16px' }}>
+          {Array.from({ length: 7 }, (_, i) => (
+            <div key={i} style={{ flex: 1 }}>
+              <LoadingSkeleton variant="column" />
+            </div>
+          ))}
+        </div>
+      )}
       {error && <p className="gcal-status gcal-status--error">{error}</p>}
 
-      {/* Time grid */}
-      <WeekGrid
-        dates={weekDates}
-        blocksByDate={blocksByDate}
-        onBlockClick={handleBlockClick}
-        today={today}
-      />
+      {!loading && (
+        <WeekGrid
+          dates={weekDates}
+          blocksByDate={blocksByDate}
+          onBlockClick={handleBlockClick}
+          today={today}
+        />
+      )}
 
-      {/* Detail panel */}
       {selectedBlock && (
         <BlockDetail
           block={selectedBlock}

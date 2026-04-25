@@ -11,7 +11,7 @@ const SOURCE_LABELS: Record<SourceType, string> = {
   travel_buffer: 'Travel',
 };
 
-/** CSS class suffix per source type — maps to --color-* variables in globals.css */
+/** CSS class suffix per source type */
 const SOURCE_CLASS: Record<SourceType, string> = {
   fixed_event: 'fixed-event',
   flexible_task: 'flexible-task',
@@ -47,7 +47,6 @@ export default function ScheduleBlock({ block, onClick }: ScheduleBlockProps) {
 
           {block.locked && (
             <span className="schedule-block__lock" aria-hidden="true" title="Locked">
-              {/* Simple SVG lock icon */}
               <svg
                 width="14"
                 height="14"

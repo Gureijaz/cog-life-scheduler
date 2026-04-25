@@ -58,7 +58,7 @@ describe('BlockDetail', () => {
   it('shows loading state while explanation is loading', () => {
     mockUseExplanation.mockReturnValue({ explanation: null, loading: true, error: null });
     render(<BlockDetail block={makeBlock()} onClose={vi.fn()} />);
-    expect(screen.getByText('Loading explanation…')).toBeInTheDocument();
+    expect(screen.getByLabelText('Loading content')).toBeInTheDocument();
   });
 
   it('shows "No explanation available" when no explanation exists', () => {
@@ -91,7 +91,7 @@ describe('BlockDetail', () => {
     mockUseExplanation.mockReturnValue({ explanation: null, loading: false, error: null });
     const onLockToggle = vi.fn();
     render(<BlockDetail block={makeBlock({ locked: false })} onClose={vi.fn()} onLockToggle={onLockToggle} />);
-    fireEvent.click(screen.getByText('Lock Block'));
+    fireEvent.click(screen.getByText('🔓 Lock Block'));
     expect(onLockToggle).toHaveBeenCalledWith('block-1', false);
   });
 });

@@ -3,20 +3,23 @@
 import { useState } from 'react';
 import type { ScheduleBlock as ScheduleBlockType } from '@/lib/types';
 import { useSchedule } from '@/hooks/useSchedule';
+import { useToast } from '@/hooks/useToast';
 import ScheduleBlock from '@/components/calendar/ScheduleBlock';
 import BlockDetail from '@/components/calendar/BlockDetail';
 import RepairSummary from '@/components/calendar/RepairSummary';
+import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 import { getTodayDate, formatDate, formatRelativeDate, formatDuration } from '@/lib/utils';
 
 export default function TodayPage() {
   const today = getTodayDate();
   const {
-    blocks, loading, error, refresh,
+    blocks, loading, error, plan,
     lockBlock, unlockBlock,
     generateSchedule, repairSchedule,
     unscheduledItems, atRiskAssignments,
     changeSummary, clearChangeSummary, generating,
   } = useSchedule(today);
+  const { addToast } = useToast();
   const [selectedBlock, setSelectedBlock] = useState<ScheduleBlockType | null>(null);
 
   const handleBlockClick = (block: ScheduleBlockType) => {
@@ -34,6 +37,24 @@ export default function TodayPage() {
     );
   };
 
+  const handleGenerate = async () => {
+    try {
+      await generateSchedule();
+      addToast('success', 'Schedule generated successfully');
+    } catch {
+      addToast('error', 'Failed to generate schedule');
+    }
+  };
+
+  const handleRepair = async () => {
+    try {
+      await repairSchedule();
+      addToast('success', 'Schedule repaired successfully');
+    } catch {
+      addToast('error', 'Failed to repair schedule');
+    }
+  };
+
   return (
     <div className="today-view">
       <header className="today-view__header">
@@ -43,24 +64,39 @@ export default function TodayPage() {
         </div>
         <button
           className="btn btn--primary"
-          onClick={generateSchedule}
+          onClick={handleGenerate}
           disabled={generating}
           aria-label="Generate schedule plan for today"
         >
+          {generating && <span className="btn__spinner" />}
           {generating ? 'Generating…' : 'Generate Plan'}
         </button>
       </header>
 
-      {loading && <p className="today-view__status">Loading schedule…</p>}
+      {loading && <LoadingSkeleton variant="block" count={3} />}
       {error && <p className="today-view__status today-view__status--error">{error}</p>}
 
       {!loading && !error && blocks.length === 0 && (
         <p className="today-view__status">No schedule blocks for today.</p>
       )}
 
+      {/* Repair prompt banner */}
+      {plan && !loading && !generating && blocks.length > 0 && (
+        <div className="repair-prompt" style={{ display: 'none' }}>
+          <span className="repair-prompt__text">Events have changed. Repair your schedule?</span>
+          <button className="btn btn--primary btn--sm" onClick={handleRepair}>
+            Repair Schedule
+          </button>
+        </div>
+      )}
+
       <div className="today-view__list" role="list" aria-label="Today's schedule blocks">
-        {blocks.map((block) => (
-          <div key={block.id} role="listitem">
+        {blocks.map((block, index) => (
+          <div
+            key={block.id}
+            role="listitem"
+            style={{ '--stagger-index': index } as React.CSSProperties}
+          >
             <ScheduleBlock block={block} onClick={handleBlockClick} />
           </div>
         ))}

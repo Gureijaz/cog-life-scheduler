@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { FixedEvent } from '@/lib/types';
 import { fixedEvents, ApiRequestError } from '@/lib/api';
 import type { CreateFixedEventInput } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
 import RecurrenceSelector from './RecurrenceSelector';
 
 interface ConflictWarning {
@@ -21,6 +22,7 @@ interface EventFormProps {
 
 export default function EventForm({ initial, onSaved, onCancel }: EventFormProps) {
   const isEdit = !!initial;
+  const { addToast } = useToast();
 
   const [title, setTitle] = useState(initial?.title ?? '');
   const [eventDate, setEventDate] = useState(initial?.eventDate ?? '');
@@ -58,7 +60,6 @@ export default function EventForm({ initial, onSaved, onCancel }: EventFormProps
     setSaving(true);
     setErrors({});
 
-    // Check for conflicts before saving (Requirement 2.3)
     if (!conflictConfirmed) {
       const found = await checkConflicts();
       if (found.length > 0) {
@@ -84,6 +85,7 @@ export default function EventForm({ initial, onSaved, onCancel }: EventFormProps
         : await fixedEvents.create(data);
       setConflicts([]);
       setConflictConfirmed(false);
+      addToast('success', isEdit ? 'Event updated' : 'Event created');
       onSaved?.(result);
     } catch (err: unknown) {
       if (err instanceof ApiRequestError && err.status === 400) {
@@ -182,6 +184,7 @@ export default function EventForm({ initial, onSaved, onCancel }: EventFormProps
       <div className="entity-form__actions">
         {onCancel && <button type="button" className="btn btn--secondary" onClick={onCancel}>Cancel</button>}
         <button type="submit" className="btn btn--primary" disabled={saving}>
+          {saving && <span className="btn__spinner" />}
           {saving ? 'Saving…' : isEdit ? 'Update Event' : 'Create Event'}
         </button>
       </div>
