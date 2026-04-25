@@ -102,18 +102,17 @@ export class ScheduleService {
     // Persist plan and blocks in a transaction
     await withTransaction(this.pool, async () => {
       const version = latestPlan ? latestPlan.version + 1 : 1;
-      await this.planRepo.create({
+      const createdPlan = await this.planRepo.create({
         userId,
         planDate: date,
         version,
         generatedAt: result.plan.generatedAt,
-        blocks: [],
-      } as Omit<SchedulePlan, 'id'>);
+      } as Omit<SchedulePlan, 'id' | 'blocks'>);
 
-      // Use the plan id from the result
+      // Use the created plan id for blocks
       for (const block of result.plan.blocks) {
         await this.blockRepo.create({
-          planId: result.plan.id,
+          planId: createdPlan.id,
           sourceType: block.sourceType,
           sourceId: block.sourceId,
           title: block.title,
