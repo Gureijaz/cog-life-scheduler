@@ -126,7 +126,7 @@ export default function EventForm({ initial, onSaved, onCancel }: EventFormProps
           <ul className="conflict-warning__list">
             {conflicts.map((c) => (
               <li key={c.eventId} className="conflict-warning__item">
-                "{c.title}" ({c.startTime} – {c.endTime})
+                &ldquo;{c.title}&rdquo; ({c.startTime} – {c.endTime})
               </li>
             ))}
           </ul>
