@@ -152,7 +152,5 @@ export interface AIResponse {
 }
 
 export interface ApiError {
-  error: string;
-  message: string;
-  fields?: Record<string, string>;
+  error: { code: string; message: string; details?: Record<string, string> };
 }

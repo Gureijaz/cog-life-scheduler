@@ -109,7 +109,7 @@ class ApiRequestError extends Error {
     public status: number,
     public body: ApiError,
   ) {
-    super(body.message ?? body.error ?? 'API request failed');
+    super(body.error?.message ?? 'API request failed');
     this.name = 'ApiRequestError';
   }
 }

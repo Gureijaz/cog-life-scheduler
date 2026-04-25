@@ -87,7 +87,7 @@ export default function EventForm({ initial, onSaved, onCancel }: EventFormProps
       onSaved?.(result);
     } catch (err: unknown) {
       if (err instanceof ApiRequestError && err.status === 400) {
-        setErrors(err.body.fields ?? { _form: err.message });
+        setErrors(err.body.error?.details ?? { _form: err.message });
       } else {
         setErrors({ _form: err instanceof Error ? err.message : 'Save failed' });
       }
