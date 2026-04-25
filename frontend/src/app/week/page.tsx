@@ -3,9 +3,12 @@
 import { useMemo, useState } from 'react';
 import type { ScheduleBlock as ScheduleBlockType } from '@/lib/types';
 import { useWeekSchedule } from '@/hooks/useSchedule';
+import { useToast } from '@/hooks/useToast';
 import WeekGrid from '@/components/calendar/WeekGrid';
 import BlockDetail from '@/components/calendar/BlockDetail';
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
+import Modal from '@/components/ui/Modal';
+import EventForm from '@/components/events/EventForm';
 import { getWeekStartDate, getTodayDate } from '@/lib/utils';
 
 function getWeekDates(start: string): string[] {
@@ -35,8 +38,10 @@ function getMonthYear(dateStr: string): string {
 export default function WeekPage() {
   const today = getTodayDate();
   const weekStart = getWeekStartDate();
-  const { plans, loading, error } = useWeekSchedule(weekStart);
+  const { plans, loading, error, refresh } = useWeekSchedule(weekStart);
+  const { addToast } = useToast();
   const [selectedBlock, setSelectedBlock] = useState<ScheduleBlockType | null>(null);
+  const [showEventModal, setShowEventModal] = useState(false);
 
   const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart]);
 
@@ -53,15 +58,36 @@ export default function WeekPage() {
     setSelectedBlock((prev) => (prev?.id === block.id ? null : block));
   };
 
+  const handleLockToggle = async (blockId: string, locked: boolean) => {
+    try {
+      const { scheduleBlocks } = await import('@/lib/api');
+      if (locked) {
+        await scheduleBlocks.unlock(blockId);
+      } else {
+        await scheduleBlocks.lock(blockId);
+      }
+      setSelectedBlock((prev) =>
+        prev && prev.id === blockId ? { ...prev, locked: !locked } : prev,
+      );
+    } catch {
+      addToast('error', `Failed to ${locked ? 'unlock' : 'lock'} block`);
+    }
+  };
+
   return (
     <div className="gcal-page">
       <header className="gcal-header">
         <h1 className="gcal-header__title">{getMonthYear(weekDates[0])}</h1>
-        <div className="gcal-header__legend">
-          <span className="gcal-legend__item"><span className="gcal-legend__dot" style={{ background: 'var(--color-fixed-event)' }} /> Events</span>
-          <span className="gcal-legend__item"><span className="gcal-legend__dot" style={{ background: 'var(--color-flexible-task)' }} /> Tasks</span>
-          <span className="gcal-legend__item"><span className="gcal-legend__dot" style={{ background: 'var(--color-assignment)' }} /> Assignments</span>
-          <span className="gcal-legend__item"><span className="gcal-legend__dot" style={{ background: 'var(--color-travel-buffer)' }} /> Travel</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+          <button className="btn btn--secondary" onClick={() => setShowEventModal(true)}>
+            Add Event
+          </button>
+          <div className="gcal-header__legend">
+            <span className="gcal-legend__item"><span className="gcal-legend__dot" style={{ background: 'var(--color-fixed-event)' }} /> Events</span>
+            <span className="gcal-legend__item"><span className="gcal-legend__dot" style={{ background: 'var(--color-flexible-task)' }} /> Tasks</span>
+            <span className="gcal-legend__item"><span className="gcal-legend__dot" style={{ background: 'var(--color-assignment)' }} /> Assignments</span>
+            <span className="gcal-legend__item"><span className="gcal-legend__dot" style={{ background: 'var(--color-travel-buffer)' }} /> Travel</span>
+          </div>
         </div>
       </header>
 
@@ -108,8 +134,16 @@ export default function WeekPage() {
         <BlockDetail
           block={selectedBlock}
           onClose={() => setSelectedBlock(null)}
+          onLockToggle={handleLockToggle}
         />
       )}
+
+      <Modal open={showEventModal} onClose={() => setShowEventModal(false)} ariaLabel="Create event">
+        <EventForm
+          onSaved={() => { setShowEventModal(false); refresh(); }}
+          onCancel={() => setShowEventModal(false)}
+        />
+      </Modal>
     </div>
   );
 }

@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Location, TravelRule } from '@/lib/types';
 import { locations as locApi, travelRules as trApi, ApiRequestError } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
 
 export default function LocationManager() {
   const [locationList, setLocationList] = useState<Location[]>([]);
   const [rules, setRules] = useState<TravelRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { addToast } = useToast();
 
   // New location form
   const [locName, setLocName] = useState('');
@@ -41,9 +43,11 @@ export default function LocationManager() {
       setLocationList((prev) => [...prev, loc]);
       setLocName('');
       setLocLabel('');
+      addToast('success', 'Location added');
     } catch (err: unknown) {
-      if (err instanceof ApiRequestError) setError(err.message);
-      else setError('Failed to create location');
+      const msg = err instanceof ApiRequestError ? err.message : 'Failed to create location';
+      setError(msg);
+      addToast('error', msg);
     }
   };
 
@@ -53,9 +57,11 @@ export default function LocationManager() {
     try {
       const rule = await trApi.create({ originId, destinationId: destId, travelMinutes });
       setRules((prev) => [...prev, rule]);
+      addToast('success', 'Travel rule added');
     } catch (err: unknown) {
-      if (err instanceof ApiRequestError) setError(err.message);
-      else setError('Failed to create travel rule');
+      const msg = err instanceof ApiRequestError ? err.message : 'Failed to create travel rule';
+      setError(msg);
+      addToast('error', msg);
     }
   };
 

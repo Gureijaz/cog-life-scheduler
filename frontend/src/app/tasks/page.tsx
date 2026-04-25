@@ -3,8 +3,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { FlexibleTask, Assignment } from '@/lib/types';
 import { flexibleTasks, assignments } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
 import { formatDate, formatDuration } from '@/lib/utils';
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
+import Modal from '@/components/ui/Modal';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import TaskForm from '@/components/tasks/TaskForm';
 
 const PRIORITY_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
 
@@ -13,6 +17,15 @@ export default function TasksPage() {
   const [assignmentList, setAssignmentList] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { addToast } = useToast();
+
+  // Modal state
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [editingTask, setEditingTask] = useState<FlexibleTask | null>(null);
+  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
+
+  // Delete confirmation state
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'task' | 'assignment'; id: string; title: string } | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -30,6 +43,46 @@ export default function TasksPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  const handleSaved = () => {
+    setShowTaskModal(false);
+    setEditingTask(null);
+    setEditingAssignment(null);
+    fetchData();
+  };
+
+  const handleCancelModal = () => {
+    setShowTaskModal(false);
+    setEditingTask(null);
+    setEditingAssignment(null);
+  };
+
+  const handleEditTask = (task: FlexibleTask) => {
+    setEditingTask(task);
+    setEditingAssignment(null);
+    setShowTaskModal(true);
+  };
+
+  const handleEditAssignment = (a: Assignment) => {
+    setEditingAssignment(a);
+    setEditingTask(null);
+    setShowTaskModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      if (deleteTarget.type === 'task') {
+        await flexibleTasks.delete(deleteTarget.id);
+      }
+      addToast('success', `${deleteTarget.type === 'task' ? 'Task' : 'Assignment'} deleted`);
+      setDeleteTarget(null);
+      fetchData();
+    } catch (err: unknown) {
+      addToast('error', err instanceof Error ? err.message : 'Delete failed');
+      setDeleteTarget(null);
+    }
+  };
+
   const sortedTasks = [...tasks].sort(
     (a, b) => (PRIORITY_ORDER[a.priority] ?? 2) - (PRIORITY_ORDER[b.priority] ?? 2),
   );
@@ -42,6 +95,9 @@ export default function TasksPage() {
     <div className="tasks-page">
       <header className="tasks-page__header">
         <h1 className="tasks-page__title">Tasks &amp; Assignments</h1>
+        <button className="btn btn--secondary" onClick={() => { setEditingTask(null); setEditingAssignment(null); setShowTaskModal(true); }}>
+          Add Task
+        </button>
       </header>
 
       {loading && <LoadingSkeleton variant="card" count={4} />}
@@ -59,9 +115,13 @@ export default function TasksPage() {
                 <div key={task.id} className="task-card" role="listitem">
                   <div className="task-card__header">
                     <span className="task-card__title">{task.title}</span>
-                    <span className={`task-card__priority task-card__priority--${task.priority}`}>
-                      {task.priority}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                      <span className={`task-card__priority task-card__priority--${task.priority}`}>
+                        {task.priority}
+                      </span>
+                      <button className="btn btn--secondary btn--sm" onClick={() => handleEditTask(task)}>Edit</button>
+                      <button className="btn btn--secondary btn--sm" onClick={() => setDeleteTarget({ type: 'task', id: task.id, title: task.title })}>Delete</button>
+                    </div>
                   </div>
                   <div className="task-card__details">
                     <span>Remaining: {formatDuration(task.remainingMinutes)}</span>
@@ -83,9 +143,13 @@ export default function TasksPage() {
                 <div key={a.id} className="task-card task-card--assignment" role="listitem">
                   <div className="task-card__header">
                     <span className="task-card__title">{a.title}</span>
-                    <span className="task-card__urgency">
-                      Urgency: {(a.urgencyScore * 100).toFixed(0)}%
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                      <span className="task-card__urgency">
+                        Urgency: {(a.urgencyScore * 100).toFixed(0)}%
+                      </span>
+                      <button className="btn btn--secondary btn--sm" onClick={() => handleEditAssignment(a)}>Edit</button>
+                      <button className="btn btn--secondary btn--sm" onClick={() => setDeleteTarget({ type: 'assignment', id: a.id, title: a.title })}>Delete</button>
+                    </div>
                   </div>
                   <div className="task-card__details">
                     <span>Remaining: {formatDuration(a.remainingMinutes)}</span>
@@ -104,6 +168,23 @@ export default function TasksPage() {
           </section>
         </>
       )}
+
+      <Modal open={showTaskModal} onClose={handleCancelModal} ariaLabel={editingTask ? 'Edit task' : editingAssignment ? 'Edit assignment' : 'Create task'}>
+        <TaskForm
+          mode={editingAssignment ? 'assignment' : 'task'}
+          initialTask={editingTask}
+          initialAssignment={editingAssignment}
+          onSaved={handleSaved}
+          onCancel={handleCancelModal}
+        />
+      </Modal>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        message={`Are you sure you want to delete "${deleteTarget?.title}"?`}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

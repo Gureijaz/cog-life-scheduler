@@ -14,10 +14,11 @@ const EXAMPLE_PROMPTS = [
 interface ChatPanelProps {
   open: boolean;
   onClose: () => void;
+  onDataChanged?: () => void;
 }
 
-export default function ChatPanel({ open, onClose }: ChatPanelProps) {
-  const { messages, sending, sendMessage, confirmAction, rejectAction } = useChat();
+export default function ChatPanel({ open, onClose, onDataChanged }: ChatPanelProps) {
+  const { messages, sending, sendMessage, confirmAction, rejectAction } = useChat(onDataChanged);
   const [input, setInput] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
 

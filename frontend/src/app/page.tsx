@@ -8,6 +8,9 @@ import ScheduleBlock from '@/components/calendar/ScheduleBlock';
 import BlockDetail from '@/components/calendar/BlockDetail';
 import RepairSummary from '@/components/calendar/RepairSummary';
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
+import Modal from '@/components/ui/Modal';
+import EventForm from '@/components/events/EventForm';
+import TaskForm from '@/components/tasks/TaskForm';
 import { getTodayDate, formatDate, formatRelativeDate, formatDuration } from '@/lib/utils';
 
 export default function TodayPage() {
@@ -17,24 +20,30 @@ export default function TodayPage() {
     lockBlock, unlockBlock,
     generateSchedule, repairSchedule,
     unscheduledItems, atRiskAssignments,
-    changeSummary, clearChangeSummary, generating,
+    changeSummary, clearChangeSummary, generating, refresh,
   } = useSchedule(today);
   const { addToast } = useToast();
   const [selectedBlock, setSelectedBlock] = useState<ScheduleBlockType | null>(null);
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [showTaskModal, setShowTaskModal] = useState(false);
 
   const handleBlockClick = (block: ScheduleBlockType) => {
     setSelectedBlock((prev) => (prev?.id === block.id ? null : block));
   };
 
   const handleLockToggle = async (blockId: string, locked: boolean) => {
-    if (locked) {
-      await unlockBlock(blockId);
-    } else {
-      await lockBlock(blockId);
+    try {
+      if (locked) {
+        await unlockBlock(blockId);
+      } else {
+        await lockBlock(blockId);
+      }
+      setSelectedBlock((prev) =>
+        prev && prev.id === blockId ? { ...prev, locked: !locked } : prev,
+      );
+    } catch {
+      addToast('error', `Failed to ${locked ? 'unlock' : 'lock'} block`);
     }
-    setSelectedBlock((prev) =>
-      prev && prev.id === blockId ? { ...prev, locked: !locked } : prev,
-    );
   };
 
   const handleGenerate = async () => {
@@ -62,15 +71,23 @@ export default function TodayPage() {
           <h1 className="today-view__title">{formatRelativeDate(today)}</h1>
           <p className="today-view__date">{formatDate(today)}</p>
         </div>
-        <button
-          className="btn btn--primary"
-          onClick={handleGenerate}
-          disabled={generating}
-          aria-label="Generate schedule plan for today"
-        >
-          {generating && <span className="btn__spinner" />}
-          {generating ? 'Generating…' : 'Generate Plan'}
-        </button>
+        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+          <button className="btn btn--secondary" onClick={() => setShowEventModal(true)}>
+            Add Event
+          </button>
+          <button className="btn btn--secondary" onClick={() => setShowTaskModal(true)}>
+            Add Task
+          </button>
+          <button
+            className="btn btn--primary"
+            onClick={handleGenerate}
+            disabled={generating}
+            aria-label="Generate schedule plan for today"
+          >
+            {generating && <span className="btn__spinner" />}
+            {generating ? 'Generating…' : 'Generate Plan'}
+          </button>
+        </div>
       </header>
 
       {loading && <LoadingSkeleton variant="block" count={3} />}
@@ -143,6 +160,20 @@ export default function TodayPage() {
           onLockToggle={handleLockToggle}
         />
       )}
+
+      <Modal open={showEventModal} onClose={() => setShowEventModal(false)} ariaLabel="Create event">
+        <EventForm
+          onSaved={() => { setShowEventModal(false); refresh(); }}
+          onCancel={() => setShowEventModal(false)}
+        />
+      </Modal>
+
+      <Modal open={showTaskModal} onClose={() => setShowTaskModal(false)} ariaLabel="Create task">
+        <TaskForm
+          onSaved={() => { setShowTaskModal(false); refresh(); }}
+          onCancel={() => setShowTaskModal(false)}
+        />
+      </Modal>
     </div>
   );
 }

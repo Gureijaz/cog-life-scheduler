@@ -1,8 +1,8 @@
 'use client';
 
 import { Inter, JetBrains_Mono } from 'next/font/google';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useCallback, useState } from 'react';
 import { ThemeContext, useThemeProvider } from '@/hooks/useTheme';
 import ToastProvider from '@/components/ui/ToastProvider';
 import Sidebar from '@/components/Sidebar';
@@ -25,6 +25,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const themeCtx = useThemeProvider();
   const [chatOpen, setChatOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleDataChanged = useCallback(() => {
+    router.refresh();
+  }, [router]);
 
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
@@ -45,7 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   {children}
                 </div>
               </main>
-              <ChatPanel open={chatOpen} onClose={() => setChatOpen(false)} />
+              <ChatPanel open={chatOpen} onClose={() => setChatOpen(false)} onDataChanged={handleDataChanged} />
             </div>
           </ToastProvider>
         </ThemeContext.Provider>

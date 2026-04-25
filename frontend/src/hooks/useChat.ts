@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import type { AIResponse } from '@/lib/types';
-import { ai } from '@/lib/api';
+import { ai, ApiRequestError } from '@/lib/api';
 
 export interface ChatMessage {
   id: string;
@@ -19,6 +19,7 @@ interface UseChatReturn {
   sendMessage: (text: string) => Promise<void>;
   confirmAction: (messageId: string) => Promise<void>;
   rejectAction: (messageId: string) => void;
+  onDataChanged?: () => void;
 }
 
 let msgCounter = 0;
@@ -26,7 +27,7 @@ function nextId(): string {
   return `msg-${Date.now()}-${++msgCounter}`;
 }
 
-export function useChat(): UseChatReturn {
+export function useChat(onDataChanged?: () => void): UseChatReturn {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,12 +49,16 @@ export function useChat(): UseChatReturn {
       };
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to send message';
-      setError(msg);
+      const isUnavailable =
+        err instanceof ApiRequestError && (err.status === 503 || err.status === 500);
+      const errorText = isUnavailable
+        ? 'The AI assistant is currently unavailable. Please check that OPENAI_API_KEY is configured.'
+        : `Sorry, something went wrong: ${err instanceof Error ? err.message : 'Unknown error'}`;
+      setError(errorText);
       const errorMsg: ChatMessage = {
         id: nextId(),
         role: 'assistant',
-        text: `Sorry, something went wrong: ${msg}`,
+        text: errorText,
         timestamp: Date.now(),
       };
       setMessages((prev) => [...prev, errorMsg]);
@@ -78,12 +83,26 @@ export function useChat(): UseChatReturn {
         timestamp: Date.now(),
       };
       setMessages((prev) => [...prev, assistantMsg]);
+      // Trigger data refresh after confirmed action
+      onDataChanged?.();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Confirmation failed');
+      const isUnavailable =
+        err instanceof ApiRequestError && (err.status === 503 || err.status === 500);
+      const errorText = isUnavailable
+        ? 'The AI assistant is currently unavailable. Please check that OPENAI_API_KEY is configured.'
+        : `Confirmation failed: ${err instanceof Error ? err.message : 'Unknown error'}`;
+      setError(errorText);
+      const errorMsg: ChatMessage = {
+        id: nextId(),
+        role: 'assistant',
+        text: errorText,
+        timestamp: Date.now(),
+      };
+      setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setSending(false);
     }
-  }, []);
+  }, [onDataChanged]);
 
   const rejectAction = useCallback((messageId: string) => {
     const rejectMsg: ChatMessage = {
