@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import type { ScheduleBlock as ScheduleBlockType } from '@/lib/types';
 import { useWeekSchedule } from '@/hooks/useSchedule';
 import { useToast } from '@/hooks/useToast';
+import { scheduleBlocks } from '@/lib/api';
 import WeekGrid from '@/components/calendar/WeekGrid';
 import BlockDetail from '@/components/calendar/BlockDetail';
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
@@ -60,7 +61,6 @@ export default function WeekPage() {
 
   const handleLockToggle = async (blockId: string, locked: boolean) => {
     try {
-      const { scheduleBlocks } = await import('@/lib/api');
       if (locked) {
         await scheduleBlocks.unlock(blockId);
       } else {

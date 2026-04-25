@@ -29,5 +29,20 @@ export function locationRouter(locationService: LocationService): Router {
     }
   });
 
+  // GET /api/locations — List locations for user
+  router.get('/', async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const locs = await locationService.getLocations(userId);
+      res.json(locs);
+    } catch (err) {
+      if (isErrorResponse(err)) {
+        res.status(errorToStatus(err)).json(err);
+        return;
+      }
+      throw err;
+    }
+  });
+
   return router;
 }

@@ -267,6 +267,10 @@ export const locations = {
       body: JSON.stringify(data),
     });
   },
+
+  list(): Promise<Location[]> {
+    return request<Location[]>('/api/locations');
+  },
 };
 
 // --- Travel Rules ---

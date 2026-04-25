@@ -1,25 +1,42 @@
 'use client';
 
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DAYS = [
+  { label: 'Mon', token: 'MON' },
+  { label: 'Tue', token: 'TUE' },
+  { label: 'Wed', token: 'WED' },
+  { label: 'Thu', token: 'THU' },
+  { label: 'Fri', token: 'FRI' },
+  { label: 'Sat', token: 'SAT' },
+  { label: 'Sun', token: 'SUN' },
+];
 
 interface RecurrenceSelectorProps {
-  value: string | null;
+  value: string | null; // e.g. "WEEKLY:MON,WED,FRI" or null
   onChange: (rule: string | null) => void;
+}
+
+function parseRule(rule: string | null): string[] {
+  if (!rule || !rule.startsWith('WEEKLY:')) return [];
+  return rule.slice(7).split(',').filter(Boolean);
+}
+
+function buildRule(tokens: string[]): string {
+  return tokens.length > 0 ? `WEEKLY:${tokens.join(',')}` : '';
 }
 
 export default function RecurrenceSelector({ value, onChange }: RecurrenceSelectorProps) {
   const enabled = value !== null && value !== '';
-  const selectedDays = value ? value.split(',').filter(Boolean) : [];
+  const selectedTokens = parseRule(value);
 
   const toggleEnabled = () => {
     onChange(enabled ? null : '');
   };
 
-  const toggleDay = (day: string) => {
-    const next = selectedDays.includes(day)
-      ? selectedDays.filter((d) => d !== day)
-      : [...selectedDays, day];
-    onChange(next.length > 0 ? next.join(',') : '');
+  const toggleDay = (token: string) => {
+    const next = selectedTokens.includes(token)
+      ? selectedTokens.filter((t) => t !== token)
+      : [...selectedTokens, token];
+    onChange(next.length > 0 ? buildRule(next) : '');
   };
 
   return (
@@ -30,15 +47,15 @@ export default function RecurrenceSelector({ value, onChange }: RecurrenceSelect
       </label>
       {enabled && (
         <div className="recurrence-selector__days">
-          {DAYS.map((day) => (
+          {DAYS.map(({ label, token }) => (
             <button
-              key={day}
+              key={token}
               type="button"
-              className={`recurrence-selector__day${selectedDays.includes(day) ? ' recurrence-selector__day--active' : ''}`}
-              onClick={() => toggleDay(day)}
-              aria-pressed={selectedDays.includes(day)}
+              className={`recurrence-selector__day${selectedTokens.includes(token) ? ' recurrence-selector__day--active' : ''}`}
+              onClick={() => toggleDay(token)}
+              aria-pressed={selectedTokens.includes(token)}
             >
-              {day}
+              {label}
             </button>
           ))}
         </div>

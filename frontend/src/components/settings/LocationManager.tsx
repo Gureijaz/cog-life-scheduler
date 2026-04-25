@@ -9,7 +9,6 @@ export default function LocationManager() {
   const [locationList, setLocationList] = useState<Location[]>([]);
   const [rules, setRules] = useState<TravelRule[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { addToast } = useToast();
 
   // New location form
@@ -22,22 +21,28 @@ export default function LocationManager() {
   const [destId, setDestId] = useState('');
   const [travelMinutes, setTravelMinutes] = useState(15);
 
-  const fetchRules = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     try {
-      const r = await trApi.list();
-      setRules(r);
-    } catch { /* ignore */ }
+      const [locs, rls] = await Promise.all([locApi.list(), trApi.list()]);
+      setLocationList(locs);
+      setRules(rls);
+    } catch {
+      // Silently handle — empty lists are fine
+    }
   }, []);
 
   useEffect(() => {
     setLoading(true);
-    // We don't have a locations.list endpoint in the API client, so we'll just load travel rules
-    fetchRules().finally(() => setLoading(false));
-  }, [fetchRules]);
+    fetchData().finally(() => setLoading(false));
+  }, [fetchData]);
+
+  const getLocationName = (id: string): string => {
+    const loc = locationList.find((l) => l.id === id);
+    return loc ? loc.name : id;
+  };
 
   const handleAddLocation = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     try {
       const loc = await locApi.create({ name: locName, label: locLabel, type: locType });
       setLocationList((prev) => [...prev, loc]);
@@ -45,31 +50,26 @@ export default function LocationManager() {
       setLocLabel('');
       addToast('success', 'Location added');
     } catch (err: unknown) {
-      const msg = err instanceof ApiRequestError ? err.message : 'Failed to create location';
-      setError(msg);
-      addToast('error', msg);
+      addToast('error', err instanceof ApiRequestError ? err.message : 'Failed to create location');
     }
   };
 
   const handleAddRule = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     try {
       const rule = await trApi.create({ originId, destinationId: destId, travelMinutes });
       setRules((prev) => [...prev, rule]);
       addToast('success', 'Travel rule added');
     } catch (err: unknown) {
-      const msg = err instanceof ApiRequestError ? err.message : 'Failed to create travel rule';
-      setError(msg);
-      addToast('error', msg);
+      addToast('error', err instanceof ApiRequestError ? err.message : 'Failed to create travel rule');
     }
   };
+
+  if (loading) return null;
 
   return (
     <div className="location-manager">
       <h2 className="entity-form__title">Locations &amp; Travel Rules</h2>
-
-      {error && <p className="entity-form__error">{error}</p>}
 
       <form className="entity-form entity-form--inline" onSubmit={handleAddLocation}>
         <h3 className="form-field__label">Add Location</h3>
@@ -139,7 +139,7 @@ export default function LocationManager() {
           <ul className="location-manager__list">
             {rules.map((r) => (
               <li key={r.id} className="location-manager__item">
-                {r.originId} → {r.destinationId}: {r.travelMinutes} min
+                {getLocationName(r.originId)} → {getLocationName(r.destinationId)}: {r.travelMinutes} min
               </li>
             ))}
           </ul>

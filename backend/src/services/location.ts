@@ -110,6 +110,11 @@ export class LocationService {
     return this.travelRuleRepo.update(ruleId, { travelMinutes });
   }
 
+  /** Get all locations for a user. */
+  async getLocations(userId: string): Promise<Location[]> {
+    return this.locationRepo.findMany({ userId });
+  }
+
   /** Get all travel rules for a user. */
   async getTravelRules(userId: string): Promise<TravelRule[]> {
     return this.travelRuleRepo.findByUser(userId);
